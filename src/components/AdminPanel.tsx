@@ -237,11 +237,8 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
     setIsLoggingIn(true);
     setAuthError("");
 
-    // Use a clean, conflict-free email alias for the Firebase Auth backend
-    const firebaseAuthEmail = "subhu07web+admin@gmail.com";
-
     try {
-      await signInWithEmailAndPassword(auth, firebaseAuthEmail, "WebDesign.money");
+      await signInWithEmailAndPassword(auth, normalizedEmail, trimmedPassword);
     } catch (err: any) {
       if (
         err.code === "auth/user-not-found" ||
@@ -250,18 +247,18 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
         err.code === "auth/invalid-email"
       ) {
         try {
-          await createUserWithEmailAndPassword(auth, firebaseAuthEmail, "WebDesign.money");
+          const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, trimmedPassword);
+          const createdUser = userCredential.user;
           // Write admin document to admins collection as well to ensure security rules pass
-          const adminDocRef = doc(db, "admins", auth.currentUser?.uid || "admin_fallback");
+          const adminDocRef = doc(db, "admins", createdUser.uid);
           await setDoc(adminDocRef, {
-            uid: auth.currentUser?.uid || "admin_fallback",
-            email: firebaseAuthEmail,
+            uid: createdUser.uid,
+            email: normalizedEmail,
             role: "admin",
           });
         } catch (createErr: any) {
           if (createErr.code === "auth/email-already-in-use") {
-            // If the alias somehow already exists but we couldn't sign in, attempt standard sign-in again or display instruction
-            setAuthError("This admin account already exists. Please verify that the system configuration is clear.");
+            setAuthError("This admin account already exists. Please check if the credentials provided are correct.");
           } else {
             setAuthError(createErr.message || "Credential generation failed.");
           }
