@@ -33,6 +33,7 @@ import {
   deleteDoc,
   setDoc,
   addDoc,
+  getDoc,
   query,
   orderBy
 } from "firebase/firestore";
@@ -90,6 +91,31 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
     });
     return unsub;
   }, []);
+
+  // Synchronize admin document in admins collection to ensure security permissions are active
+  useEffect(() => {
+    if (user && user.email) {
+      const emailLower = user.email.toLowerCase();
+      if (AUTHORIZED_ADMIN_EMAILS.includes(emailLower)) {
+        const adminDocRef = doc(db, "admins", user.uid);
+        getDoc(adminDocRef).then((docSnap) => {
+          if (!docSnap.exists()) {
+            setDoc(adminDocRef, {
+              uid: user.uid,
+              email: user.email,
+              role: "admin",
+            }).then(() => {
+              console.log("Successfully synchronized admin document in database!");
+            }).catch((err) => {
+              console.error("Failed to create admin document:", err);
+            });
+          }
+        }).catch((err) => {
+          console.error("Error reading admin document:", err);
+        });
+      }
+    }
+  }, [user]);
 
   // Request native system notification permissions
   const requestNotificationPermission = async () => {
