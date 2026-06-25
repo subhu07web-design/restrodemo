@@ -170,12 +170,12 @@ export default function MenuSection({ menuItems, onAddToCart, cartQuantities }: 
                         <button
                           id={`add-to-cart-btn-${item.id}`}
                           onClick={() => onAddToCart(item)}
-                          className="flex items-center gap-1 rounded-lg bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-600 hover:bg-orange-100 transition-colors"
+                          className="flex items-center gap-1.5 rounded-xl bg-orange-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-orange-500/10 hover:bg-orange-600 group-hover:bg-orange-600 group-hover:scale-105 group-hover:shadow-md group-hover:shadow-orange-500/20 active:scale-95 transition-all duration-300 cursor-pointer"
                         >
-                          <Plus className="h-3.5 w-3.5" />
+                          <Plus className="h-4 w-4 stroke-[3]" />
                           <span>Add to Plate</span>
                           {countInCart > 0 && (
-                            <span className="ml-1 rounded-full bg-orange-600 px-1.5 py-0.2 text-[10px] font-bold text-white">
+                            <span className="ml-1 rounded-full bg-white px-1.5 py-0.5 text-[10px] font-black text-orange-600 animate-pulse">
                               {countInCart}
                             </span>
                           )}

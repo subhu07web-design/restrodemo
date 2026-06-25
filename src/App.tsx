@@ -13,7 +13,7 @@ import { MenuItem, CartItem, Order } from "./types";
 import { collection, getDocs, doc, setDoc, onSnapshot, query, limit } from "firebase/firestore";
 import { db, auth, OperationType, handleFirestoreError } from "./firebase";
 import { DEFAULT_MENU_ITEMS } from "./data/defaultMenu";
-import { Sparkles, Utensils, Clock, Flame, Loader2, ArrowRight, Calendar, Phone } from "lucide-react";
+import { Sparkles, Utensils, Clock, Flame, Loader2, ArrowRight, Calendar, Phone, CheckCircle2, ShoppingBag, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -34,6 +34,125 @@ export default function App() {
 
   // Shopping Cart State
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+  // Sound synthesis utility using the native Web Audio API
+  const playSound = (type: "add" | "confirm" | "remove") => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+
+      if (type === "add") {
+        // High-pitched sweet chime for selection
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(587.33, now); // D5
+        osc.frequency.exponentialRampToValueAtTime(880.00, now + 0.12); // A5
+
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === "confirm") {
+        // Joyful multi-tone celebratory success chord
+        const now = ctx.currentTime;
+        const playTone = (freq: number, startDelay: number, duration: number, volume: number) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, now + startDelay);
+          gain.gain.setValueAtTime(0, now + startDelay);
+          gain.gain.linearRampToValueAtTime(volume, now + startDelay + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + startDelay + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + startDelay);
+          osc.stop(now + startDelay + duration);
+        };
+
+        // Beautiful rising chord: C5 (523.25), E5 (659.25), G5 (783.99), C6 (1046.50)
+        playTone(523.25, 0, 0.35, 0.08);
+        playTone(659.25, 0.07, 0.35, 0.08);
+        playTone(783.99, 0.14, 0.35, 0.08);
+        playTone(1046.50, 0.21, 0.5, 0.12);
+
+        // Text-to-speech for female voice saying "Thank you for your order!"
+        if ("speechSynthesis" in window) {
+          const speakText = () => {
+            const utterance = new SpeechSynthesisUtterance("Thank you for your order!");
+            const voices = window.speechSynthesis.getVoices();
+            // Try to find a female sounding English voice
+            const femaleVoice = voices.find(
+              (v) =>
+                v.lang.startsWith("en") &&
+                (v.name.toLowerCase().includes("female") ||
+                  v.name.toLowerCase().includes("zira") ||
+                  v.name.toLowerCase().includes("samantha") ||
+                  v.name.toLowerCase().includes("susan") ||
+                  v.name.toLowerCase().includes("hazel") ||
+                  v.name.toLowerCase().includes("karen") ||
+                  v.name.toLowerCase().includes("moira") ||
+                  v.name.toLowerCase().includes("tessa") ||
+                  v.name.toLowerCase().includes("veena") ||
+                  v.name.toLowerCase().includes("google us english") ||
+                  v.name.toLowerCase().includes("natural"))
+            );
+            if (femaleVoice) {
+              utterance.voice = femaleVoice;
+            }
+            utterance.pitch = 1.15;
+            utterance.rate = 0.95;
+            window.speechSynthesis.speak(utterance);
+          };
+
+          // Speak with 600ms delay so tone plays first
+          if (window.speechSynthesis.getVoices().length > 0) {
+            setTimeout(speakText, 600);
+          } else {
+            // Wait for voices to load if needed
+            window.speechSynthesis.onvoiceschanged = () => {
+              setTimeout(speakText, 600);
+              window.speechSynthesis.onvoiceschanged = null;
+            };
+          }
+        }
+      } else if (type === "remove") {
+        // Subtle clean swipe down
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(440.00, now); // A4
+        osc.frequency.exponentialRampToValueAtTime(220.00, now + 0.18); // A3
+
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      }
+    } catch (e) {
+      console.warn("AudioContext synthesis is blocked or unsupported by browser autoplays:", e);
+    }
+  };
+
+  // Toast notifications state
+  const [toasts, setToasts] = useState<{ id: string; message: string; description?: string; type: "success" | "info" | "error" }[]>([]);
+
+  const addToast = (message: string, description?: string, type: "success" | "info" | "error" = "success") => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { id, message, description, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  };
 
   // Order Tracking State
   const [trackedOrderIds, setTrackedOrderIds] = useState<string[]>([]);
@@ -135,6 +254,12 @@ export default function App() {
       }
       return [...prev, { item, quantity: 1 }];
     });
+    playSound("add");
+    addToast(
+      "Added to Plate! 🍽️",
+      `${item.name} has been added to your plate.`,
+      "success"
+    );
   };
 
   const handleUpdateCartQuantity = (itemId: string, quantity: number) => {
@@ -148,6 +273,15 @@ export default function App() {
   };
 
   const handleRemoveFromCart = (itemId: string) => {
+    const itemToRemove = cartItems.find((i) => i.item.id === itemId);
+    if (itemToRemove) {
+      playSound("remove");
+      addToast(
+        "Item Removed 🗑️",
+        `${itemToRemove.item.name} has been removed from your plate.`,
+        "info"
+      );
+    }
     setCartItems((prev) => prev.filter((i) => i.item.id !== itemId));
   };
 
@@ -170,6 +304,13 @@ export default function App() {
       return updated;
     });
     setIsTrackerOpen(true);
+    
+    playSound("confirm");
+    addToast(
+      "Order Confirmed! 🎉",
+      `Your order #${order.id.slice(-6).toUpperCase()} has been placed successfully.`,
+      "success"
+    );
   };
 
   // Count helper
@@ -443,6 +584,49 @@ export default function App() {
           <span className="hidden md:inline text-xs font-bold tracking-tight">Call: 88223 44281</span>
         </a>
 
+      </div>
+
+      {/* Custom Toast Notifications Overlay */}
+      <div id="toast-notifications-container" className="fixed top-20 right-4 z-[999] flex flex-col gap-3 w-full max-w-sm pointer-events-none px-4 sm:px-0">
+        <AnimatePresence>
+          {toasts.map((t) => (
+            <motion.div
+              key={t.id}
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="pointer-events-auto flex w-full items-start gap-3.5 rounded-2xl border bg-white/95 backdrop-blur-md p-4 shadow-xl border-zinc-100 relative overflow-hidden"
+            >
+              {/* Highlight bar */}
+              <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${t.type === 'success' ? 'bg-emerald-500' : 'bg-orange-500'}`} />
+
+              <div className="flex-1 pl-1">
+                <div className="flex items-center gap-2">
+                  {t.type === 'success' ? (
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0 animate-bounce" />
+                  ) : (
+                    <ShoppingBag className="h-5 w-5 text-orange-500 shrink-0" />
+                  )}
+                  <h4 className="font-sans text-sm font-extrabold text-zinc-900">{t.message}</h4>
+                </div>
+                {t.description && (
+                  <p className="mt-1.5 text-xs text-zinc-500 leading-relaxed font-medium">
+                    {t.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setToasts((prev) => prev.filter((toast) => toast.id !== t.id))}
+                className="text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
     </div>

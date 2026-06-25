@@ -40,6 +40,8 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthState
 import { db, auth } from "../firebase";
 import { DEFAULT_MENU_ITEMS } from "../data/defaultMenu";
 
+const AUTHORIZED_ADMIN_EMAILS = ["admin@restaurant.com", "daskajaldas780@gmail.com"];
+
 interface AdminPanelProps {
   menuItems: MenuItem[];
   onRefreshMenu: () => void;
@@ -88,7 +90,7 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
 
   // Listen to Orders in real-time
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.email || !AUTHORIZED_ADMIN_EMAILS.includes(user.email)) return;
 
     const ordersQuery = query(collection(db, "orders"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(
@@ -168,8 +170,8 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err: any) {
       if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
-        // Automatically attempt to create the account if it is the default credentials
-        if (email === "admin@restaurant.com") {
+        // Automatically attempt to create the account if it is in the authorized admin list
+        if (AUTHORIZED_ADMIN_EMAILS.includes(email)) {
           try {
             await createUserWithEmailAndPassword(auth, email, password);
             // Write admin document to admins collection as well to ensure security rules pass
@@ -183,7 +185,7 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
             setAuthError(createErr.message || "Credential generation failed.");
           }
         } else {
-          setAuthError("Invalid credentials. Use admin@restaurant.com / admin123 to access the dashboard.");
+          setAuthError("Invalid credentials or unauthorized email.");
         }
       } else {
         setAuthError(err.message || "Failed to authenticate.");
@@ -337,7 +339,7 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
   });
 
   // Login Screen render
-  if (!user) {
+  if (!user || !user.email || !AUTHORIZED_ADMIN_EMAILS.includes(user.email)) {
     return (
       <div id="admin-login-screen" className="mx-auto max-w-md px-4 py-16 sm:py-24">
         <motion.div
