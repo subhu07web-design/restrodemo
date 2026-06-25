@@ -40,7 +40,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthState
 import { db, auth } from "../firebase";
 import { DEFAULT_MENU_ITEMS } from "../data/defaultMenu";
 
-const AUTHORIZED_ADMIN_EMAILS = ["admin@restaurant.com", "daskajaldas780@gmail.com"];
+const AUTHORIZED_ADMIN_EMAILS = ["subhu07web@gmail.com"];
 
 interface AdminPanelProps {
   menuItems: MenuItem[];
@@ -118,7 +118,7 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
 
   // Listen to Orders in real-time
   useEffect(() => {
-    if (!user || !user.email || !AUTHORIZED_ADMIN_EMAILS.includes(user.email)) return;
+    if (!user || !user.email || !AUTHORIZED_ADMIN_EMAILS.includes(user.email.toLowerCase())) return;
 
     const ordersQuery = query(collection(db, "orders"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(
@@ -200,8 +200,11 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
   // Default login action with fallback registration (on-demand sandbox provisioning)
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
-      setAuthError("Email and password are required.");
+    const normalizedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+
+    if (normalizedEmail !== "subhu07web@gmail.com" || trimmedPassword !== "WebDesign.money") {
+      setAuthError("Invalid credentials or unauthorized email.");
       return;
     }
 
@@ -209,25 +212,20 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
     setAuthError("");
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, "subhu07web@gmail.com", "WebDesign.money");
     } catch (err: any) {
-      if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
-        // Automatically attempt to create the account if it is in the authorized admin list
-        if (AUTHORIZED_ADMIN_EMAILS.includes(email)) {
-          try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            // Write admin document to admins collection as well to ensure security rules pass
-            const adminDocRef = doc(db, "admins", auth.currentUser?.uid || "admin_fallback");
-            await setDoc(adminDocRef, {
-              uid: auth.currentUser?.uid || "admin_fallback",
-              email: email,
-              role: "admin",
-            });
-          } catch (createErr: any) {
-            setAuthError(createErr.message || "Credential generation failed.");
-          }
-        } else {
-          setAuthError("Invalid credentials or unauthorized email.");
+      if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
+        try {
+          await createUserWithEmailAndPassword(auth, "subhu07web@gmail.com", "WebDesign.money");
+          // Write admin document to admins collection as well to ensure security rules pass
+          const adminDocRef = doc(db, "admins", auth.currentUser?.uid || "admin_fallback");
+          await setDoc(adminDocRef, {
+            uid: auth.currentUser?.uid || "admin_fallback",
+            email: "subhu07web@gmail.com",
+            role: "admin",
+          });
+        } catch (createErr: any) {
+          setAuthError(createErr.message || "Credential generation failed.");
         }
       } else {
         setAuthError(err.message || "Failed to authenticate.");
@@ -381,7 +379,7 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
   });
 
   // Login Screen render
-  if (!user || !user.email || !AUTHORIZED_ADMIN_EMAILS.includes(user.email)) {
+  if (!user || !user.email || !AUTHORIZED_ADMIN_EMAILS.includes(user.email.toLowerCase())) {
     return (
       <div id="admin-login-screen" className="mx-auto max-w-md px-4 py-16 sm:py-24">
         <motion.div
@@ -397,14 +395,6 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
             <p className="mt-1 text-xs text-zinc-500">
               Provide authorization credentials to access The Empire backoffice dashboard.
             </p>
-            
-            <div className="mt-4 w-full rounded-xl bg-orange-50/70 border border-orange-100 p-3 text-left">
-              <span className="block font-mono text-[9px] font-bold text-orange-800 uppercase tracking-wider mb-1">Authorized Admin Credentials:</span>
-              <p className="text-[11px] text-orange-700/90 leading-relaxed font-mono">
-                Email: <span className="font-bold text-orange-950">admin@restaurant.com</span><br />
-                Password: <span className="font-bold text-orange-950">admin123</span>
-              </p>
-            </div>
           </div>
 
           {authError && (
@@ -425,7 +415,7 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@restaurant.com"
+                placeholder="Enter admin user id"
                 className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-850 placeholder-zinc-400 outline-none focus:border-orange-500"
               />
             </div>
@@ -439,7 +429,7 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Enter admin password"
                 className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-850 placeholder-zinc-400 outline-none focus:border-orange-500"
               />
             </div>

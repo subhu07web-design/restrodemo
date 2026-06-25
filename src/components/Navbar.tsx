@@ -43,7 +43,7 @@ export default function Navbar({
     }
   };
 
-  const isAdminEmail = currentUser?.email === "admin@restaurant.com";
+  const isAdminEmail = currentUser?.email?.toLowerCase() === "subhu07web@gmail.com";
 
   return (
     <>
