@@ -50,8 +50,8 @@ interface AdminPanelProps {
 export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps) {
   // Authentication State
   const [user, setUser] = useState<User | null>(null);
-  const [email, setEmail] = useState("admin@restaurant.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [authError, setAuthError] = useState("");
 
@@ -397,6 +397,14 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
             <p className="mt-1 text-xs text-zinc-500">
               Provide authorization credentials to access The Empire backoffice dashboard.
             </p>
+            
+            <div className="mt-4 w-full rounded-xl bg-orange-50/70 border border-orange-100 p-3 text-left">
+              <span className="block font-mono text-[9px] font-bold text-orange-800 uppercase tracking-wider mb-1">Authorized Admin Credentials:</span>
+              <p className="text-[11px] text-orange-700/90 leading-relaxed font-mono">
+                Email: <span className="font-bold text-orange-950">admin@restaurant.com</span><br />
+                Password: <span className="font-bold text-orange-950">admin123</span>
+              </p>
+            </div>
           </div>
 
           {authError && (
