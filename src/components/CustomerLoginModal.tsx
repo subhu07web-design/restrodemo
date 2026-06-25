@@ -55,7 +55,9 @@ export default function CustomerLoginModal({ isOpen, onClose }: CustomerLoginMod
       }
     } catch (err: any) {
       console.error("Auth failed:", err);
-      if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
+      if (err.code === "auth/operation-not-allowed") {
+        setErrorMsg("Firebase Console mein 'Email/Password' login disabled hai. Please Firebase Console main jaakar Authentication -> Sign-in method tab par Email/Password provider ko Enable karein.");
+      } else if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
         setErrorMsg("Incorrect email or password. If you don't have an account, please switch to Register.");
       } else if (err.code === "auth/email-already-in-use") {
         setErrorMsg("This email is already in use. Please try logging in instead.");
