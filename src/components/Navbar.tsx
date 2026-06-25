@@ -43,7 +43,9 @@ export default function Navbar({
     }
   };
 
-  const isAdminEmail = currentUser?.email?.toLowerCase() === "subhu07web@gmail.com";
+  const isAdminEmail =
+    currentUser?.email?.toLowerCase() === "subhu07web@gmail.com" ||
+    currentUser?.email?.toLowerCase() === "subhu07web+admin@gmail.com";
 
   return (
     <>

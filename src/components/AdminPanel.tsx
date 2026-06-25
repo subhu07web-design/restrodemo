@@ -40,7 +40,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthState
 import { db, auth } from "../firebase";
 import { DEFAULT_MENU_ITEMS } from "../data/defaultMenu";
 
-const AUTHORIZED_ADMIN_EMAILS = ["subhu07web@gmail.com"];
+const AUTHORIZED_ADMIN_EMAILS = ["subhu07web@gmail.com", "subhu07web+admin@gmail.com"];
 
 interface AdminPanelProps {
   menuItems: MenuItem[];
@@ -211,21 +211,34 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
     setIsLoggingIn(true);
     setAuthError("");
 
+    // Use a clean, conflict-free email alias for the Firebase Auth backend
+    const firebaseAuthEmail = "subhu07web+admin@gmail.com";
+
     try {
-      await signInWithEmailAndPassword(auth, "subhu07web@gmail.com", "WebDesign.money");
+      await signInWithEmailAndPassword(auth, firebaseAuthEmail, "WebDesign.money");
     } catch (err: any) {
-      if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
+      if (
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/invalid-email"
+      ) {
         try {
-          await createUserWithEmailAndPassword(auth, "subhu07web@gmail.com", "WebDesign.money");
+          await createUserWithEmailAndPassword(auth, firebaseAuthEmail, "WebDesign.money");
           // Write admin document to admins collection as well to ensure security rules pass
           const adminDocRef = doc(db, "admins", auth.currentUser?.uid || "admin_fallback");
           await setDoc(adminDocRef, {
             uid: auth.currentUser?.uid || "admin_fallback",
-            email: "subhu07web@gmail.com",
+            email: firebaseAuthEmail,
             role: "admin",
           });
         } catch (createErr: any) {
-          setAuthError(createErr.message || "Credential generation failed.");
+          if (createErr.code === "auth/email-already-in-use") {
+            // If the alias somehow already exists but we couldn't sign in, attempt standard sign-in again or display instruction
+            setAuthError("This admin account already exists. Please verify that the system configuration is clear.");
+          } else {
+            setAuthError(createErr.message || "Credential generation failed.");
+          }
         }
       } else {
         setAuthError(err.message || "Failed to authenticate.");
