@@ -3,19 +3,19 @@ import { getFirestore, doc, getDocFromServer } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyButE11B2GTxZZanoloqzAB7S2_Zp8Hsw8",
-  authDomain: "restrodemo-a9389.firebaseapp.com",
-  projectId: "restrodemo-a9389",
-  storageBucket: "restrodemo-a9389.firebasestorage.app",
-  messagingSenderId: "728114268545",
-  appId: "1:728114268545:web:daa10ef72656edd27d8080"
+  apiKey: "AIzaSyAQ8WuFHSdKJcR2mrGAW2DDesIj0rXkU5I",
+  authDomain: "cobalt-flame-nsjh2.firebaseapp.com",
+  projectId: "cobalt-flame-nsjh2",
+  storageBucket: "cobalt-flame-nsjh2.firebasestorage.app",
+  messagingSenderId: "1023879491794",
+  appId: "1:1023879491794:web:fe43fce2471d2627bc7d0b"
 };
 
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-export const db = getFirestore(app);
+export const db = getFirestore(app, "ai-studio-184164a6-9ac6-49ca-9196-188909d8a9ca");
 
 // Initialize Auth
 export const auth = getAuth(app);
