@@ -129,7 +129,7 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
 
   // Audio / Speech / Toast Trigger
   const triggerOrderNotification = (order: Order) => {
-    const speechText = `New order received from ${order.customerName} for a total of ${order.totalAmount.toFixed(0)} dollars.`;
+    const speechText = `New order received from ${order.customerName} for a total of ${order.totalAmount.toFixed(0)} rupees.`;
 
     // Audio Synthesis (TTS) - satisfying "real time order notifications"
     if (soundEnabled && "speechSynthesis" in window) {
@@ -144,7 +144,7 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
     const newToast = {
       id: toastId,
       title: "🛎️ New Dining Order!",
-      message: `${order.customerName} ordered ${order.items.reduce((sum, i) => sum + i.quantity, 0)} items ($${order.totalAmount.toFixed(2)})`,
+      message: `${order.customerName} ordered ${order.items.reduce((sum, i) => sum + i.quantity, 0)} items (₹${order.totalAmount.toFixed(2)})`,
     };
 
     setToasts((prev) => [...prev, newToast]);
@@ -589,7 +589,7 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
                       </div>
                       <div className="text-right">
                         <span className="font-mono text-sm font-extrabold text-orange-600 block">
-                          ${order.totalAmount.toFixed(2)}
+                          ₹{order.totalAmount.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -621,7 +621,7 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
                             </strong>
                             {it.name}
                           </span>
-                          <span className="font-mono text-zinc-500">${(it.price * it.quantity).toFixed(2)}</span>
+                          <span className="font-mono text-zinc-500">₹{(it.price * it.quantity).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
