@@ -62,6 +62,9 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
   // Notifications State
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [toasts, setToasts] = useState<{ id: string; message: string; title: string }[]>([]);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    typeof window !== "undefined" && "Notification" in window ? window.Notification.permission : "default"
+  );
 
   // Menu Editor state
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
@@ -87,6 +90,31 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
     });
     return unsub;
   }, []);
+
+  // Request native system notification permissions
+  const requestNotificationPermission = async () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      try {
+        const permission = await window.Notification.requestPermission();
+        setNotificationPermission(permission);
+        if (permission === "granted") {
+          new window.Notification("System Alerts Enabled! 🔔", {
+            body: "You will now receive system notifications for new customer orders.",
+          });
+        }
+      } catch (err) {
+        console.error("Error requesting notification permission:", err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (user && typeof window !== "undefined" && "Notification" in window) {
+      if (window.Notification.permission === "default") {
+        requestNotificationPermission();
+      }
+    }
+  }, [user]);
 
   // Listen to Orders in real-time
   useEffect(() => {
@@ -137,6 +165,20 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
       utterance.rate = 1.0;
       utterance.pitch = 1.1;
       window.speechSynthesis.speak(utterance);
+    }
+
+    // Trigger Native Browser System Notification (allows background alerts even when not in tab)
+    if (typeof window !== "undefined" && "Notification" in window && window.Notification.permission === "granted") {
+      try {
+        const itemSummary = order.items.map(it => `${it.quantity}x ${it.name}`).join(", ");
+        new window.Notification("🛎️ New Restaurant Order!", {
+          body: `${order.customerName} ordered: ${itemSummary} for a total of ₹${order.totalAmount.toFixed(0)}`,
+          tag: order.id,
+          requireInteraction: true
+        });
+      } catch (err) {
+        console.error("Failed to display native notification:", err);
+      }
     }
 
     // Add visual toast
@@ -478,6 +520,32 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
                   <VolumeX className="h-3.5 w-3.5" />
                   <span className="font-mono">Sound Muted</span>
                 </>
+              )}
+            </button>
+
+            <span className="text-zinc-300">|</span>
+
+            <button
+              id="notification-permission-btn"
+              onClick={requestNotificationPermission}
+              className="flex items-center gap-1 text-[11px] font-medium transition-colors cursor-pointer"
+              title="Request browser native notifications for order alerts"
+            >
+              {notificationPermission === "granted" ? (
+                <div className="flex items-center gap-1 text-emerald-600">
+                  <Bell className="h-3.5 w-3.5 animate-bounce" />
+                  <span className="font-mono font-semibold">System Alerts On</span>
+                </div>
+              ) : notificationPermission === "denied" ? (
+                <div className="flex items-center gap-1 text-red-500" title="Notifications blocked. Please allow them in your browser settings.">
+                  <Bell className="h-3.5 w-3.5 opacity-50" />
+                  <span className="font-mono font-semibold">Alerts Blocked</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-zinc-500 hover:text-orange-600">
+                  <Bell className="h-3.5 w-3.5" />
+                  <span className="font-mono font-semibold underline decoration-dotted">Enable System Alerts</span>
+                </div>
               )}
             </button>
           </div>
