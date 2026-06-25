@@ -157,12 +157,12 @@ export default function AdminPanel({ menuItems, onRefreshMenu }: AdminPanelProps
         snapshot.docChanges().forEach((change) => {
           if (change.type === "added" && !isInitialLoad.current) {
             newOrderAdded = true;
-            latestOrder = change.doc.data() as Order;
+            latestOrder = { id: change.doc.id, ...change.doc.data() } as Order;
           }
         });
 
         snapshot.forEach((docSnap) => {
-          fetchedOrders.push(docSnap.data() as Order);
+          fetchedOrders.push({ id: docSnap.id, ...docSnap.data() } as Order);
         });
 
         setOrders(fetchedOrders);
