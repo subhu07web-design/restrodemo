@@ -1,0 +1,8 @@
+{
+  "name": "Restaurant Ordering App",
+  "description": "A responsive restaurant ordering website featuring an interactive menu, cart management, checkout form, admin credentials dashboard, and real-time order tracking notifications.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

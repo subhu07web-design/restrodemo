@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "MenuItem": {
+      "title": "MenuItem",
+      "description": "Represents a food or beverage item on the restaurant menu.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the menu item." },
+        "name": { "type": "string", "description": "Name of the food or beverage." },
+        "description": { "type": "string", "description": "Description of ingredients or preparation." },
+        "price": { "type": "number", "description": "Price in USD." },
+        "category": { "type": "string", "enum": ["Starters", "Mains", "Desserts", "Beverages"], "description": "Category of food item." },
+        "imageUrl": { "type": "string", "description": "URL to the item's photo." },
+        "isAvailable": { "type": "boolean", "description": "Whether the item is currently in stock." }
+      },
+      "required": ["id", "name", "price", "category", "isAvailable"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Represents a customer's order.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique order ID." },
+        "customerName": { "type": "string", "description": "Name of the customer." },
+        "customerEmail": { "type": "string", "format": "email", "description": "Customer email." },
+        "customerPhone": { "type": "string", "description": "Customer phone number." },
+        "deliveryAddress": { "type": "string", "description": "Physical address for delivery." },
+        "items": { "type": "array", "description": "List of ordered items with quantities." },
+        "totalAmount": { "type": "number", "description": "Grand total of the order." },
+        "status": { "type": "string", "enum": ["Pending", "Preparing", "Out for Delivery", "Delivered", "Cancelled"], "description": "Current status of the order." },
+        "createdAt": { "type": "string", "description": "Timestamp when order was placed." },
+        "updatedAt": { "type": "string", "description": "Timestamp of the last update." }
+      },
+      "required": ["id", "customerName", "customerEmail", "customerPhone", "deliveryAddress", "items", "totalAmount", "status", "createdAt", "updatedAt"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Authorized admin users who can manage menu and orders.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth User ID." },
+        "email": { "type": "string", "description": "Email address of the administrator." },
+        "role": { "type": "string", "enum": ["admin"], "description": "Role level." }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/menu_items/{itemId}": {
+      "schema": "MenuItem",
+      "description": "Restaurant menu database."
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer order queue."
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Registered administrators with system access."
+    }
+  }
+}
